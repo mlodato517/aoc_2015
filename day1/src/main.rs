@@ -1,4 +1,5 @@
 use std::fs::read_to_string;
+use std::str::Chars;
 
 fn main() {
     let input = read_to_string("input.txt").unwrap();
@@ -6,29 +7,43 @@ fn main() {
     println!("part2: {}", part2(&input));
 }
 
-fn part1(input: &str) -> i32 {
-    let mut floor = 0;
-    for c in input.chars() {
-        match c {
-            '(' => floor += 1,
-            ')' => floor -= 1,
-            _ => panic!("unexpected input"),
+struct FloorIter<'a> {
+    floor: i32,
+    instructions: Chars<'a>,
+}
+
+impl<'a> FloorIter<'a> {
+    fn new(s: &'a str) -> Self {
+        FloorIter {
+            floor: 0,
+            instructions: s.chars(),
         }
     }
-    floor
+}
+
+impl Iterator for FloorIter<'_> {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.instructions.next().map(|c| {
+            match c {
+                '(' => self.floor += 1,
+                ')' => self.floor -= 1,
+                _ => panic!("invalid input"),
+            }
+            self.floor
+        })
+    }
+}
+
+fn part1(input: &str) -> i32 {
+    FloorIter::new(input).last().unwrap()
 }
 
 fn part2(input: &str) -> usize {
-    let mut floor = 0;
-    for (i, c) in input.char_indices() {
-        match c {
-            '(' => floor += 1,
-            ')' => floor -= 1,
-            _ => panic!("unexpected input"),
-        }
-        if floor < 0 {
-            return i + 1;
-        }
-    }
-    panic!("never went negative");
+    FloorIter::new(input)
+        .zip(1..)
+        .find(|&(floor, _)| floor < 0)
+        .unwrap()
+        .1
 }
