@@ -1,40 +1,32 @@
-use std::str::Chars;
+/// Santa starts on floor 0.
+const INITIAL_FLOOR: i32 = 0;
 
-struct FloorIter<'a> {
-    floor: i32,
-    instructions: Chars<'a>,
-}
-
-impl<'a> FloorIter<'a> {
-    fn new(s: &'a str) -> Self {
-        FloorIter {
-            floor: 0,
-            instructions: s.chars(),
-        }
+/// Updates the floor Santa would reach after following the passed `instruction`.
+/// Returns `Some(new_floor)` to be compatible with [`std::iter::Iterator::scan`].
+fn process_floor(current_floor: &mut i32, instruction: char) -> Option<i32> {
+    match instruction {
+        '(' => *current_floor += 1,
+        ')' => *current_floor -= 1,
+        _ => panic!("invalid input"),
     }
+    Some(*current_floor)
 }
 
-impl Iterator for FloorIter<'_> {
-    type Item = i32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.instructions.next().map(|c| {
-            match c {
-                '(' => self.floor += 1,
-                ')' => self.floor -= 1,
-                _ => panic!("invalid input"),
-            }
-            self.floor
-        })
-    }
-}
-
+/// Returns the last floor Santa would be on after following all the instructions in `input`.
 pub fn part1(input: &str) -> i32 {
-    FloorIter::new(input).last().unwrap()
+    input
+        .chars()
+        .scan(INITIAL_FLOOR, process_floor)
+        .last()
+        .unwrap()
 }
 
+/// Returns the first day Santa be enter the basement on while following all the instructions in
+/// `input`.
 pub fn part2(input: &str) -> usize {
-    FloorIter::new(input)
+    input
+        .chars()
+        .scan(INITIAL_FLOOR, process_floor)
         .zip(1..)
         .find(|&(floor, _)| floor < 0)
         .unwrap()
