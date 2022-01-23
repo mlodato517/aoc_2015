@@ -6,8 +6,7 @@ const INITIAL_FLOOR: i32 = 0;
 fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
     match instruction {
         b'(' => *current_floor += 1,
-        b')' => *current_floor -= 1,
-        _ => panic!("invalid input"),
+        _ => *current_floor -= 1,
     }
     Some(*current_floor)
 }
