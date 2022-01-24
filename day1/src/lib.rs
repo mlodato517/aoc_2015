@@ -3,10 +3,10 @@ const INITIAL_FLOOR: i32 = 0;
 
 /// Updates the floor Santa would reach after following the passed `instruction`.
 /// Returns `Some(new_floor)` to be compatible with [`std::iter::Iterator::scan`].
-fn process_floor(current_floor: &mut i32, instruction: char) -> Option<i32> {
+fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
     match instruction {
-        '(' => *current_floor += 1,
-        ')' => *current_floor -= 1,
+        b'(' => *current_floor += 1,
+        b')' => *current_floor -= 1,
         _ => panic!("invalid input"),
     }
     Some(*current_floor)
@@ -15,7 +15,7 @@ fn process_floor(current_floor: &mut i32, instruction: char) -> Option<i32> {
 /// Returns the last floor Santa would be on after following all the instructions in `input`.
 pub fn part1(input: &str) -> i32 {
     input
-        .chars()
+        .bytes()
         .scan(INITIAL_FLOOR, process_floor)
         .last()
         .unwrap()
@@ -25,7 +25,7 @@ pub fn part1(input: &str) -> i32 {
 /// `input`.
 pub fn part2(input: &str) -> usize {
     input
-        .chars()
+        .bytes()
         .scan(INITIAL_FLOOR, process_floor)
         .zip(1..)
         .find(|&(floor, _)| floor < 0)
