@@ -4,10 +4,7 @@ const INITIAL_FLOOR: i32 = 0;
 /// Updates the floor Santa would reach after following the passed `instruction`.
 /// Returns `Some(new_floor)` to be compatible with [`std::iter::Iterator::scan`].
 fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
-    match instruction {
-        b'(' => *current_floor += 1,
-        _ => *current_floor -= 1,
-    }
+    *current_floor -= instruction as i32 * 2 - (b'(' as i32 + b')' as i32);
     Some(*current_floor)
 }
 
