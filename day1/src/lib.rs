@@ -9,6 +9,9 @@ fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
 }
 
 /// Returns the last floor Santa would be on after following all the instructions in `input`.
+///
+/// NOTE - I tried this with more-or-less `bytes().sum() * 2 - (81 * input.len())` and there was no
+/// appreciable performance change.
 pub fn part1(input: &str) -> i32 {
     input
         .bytes()
