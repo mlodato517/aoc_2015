@@ -21,7 +21,7 @@ pub fn part1(input: &str) -> i32 {
         .unwrap()
 }
 
-/// Returns the first day Santa be enter the basement on while following all the instructions in
+/// Returns the first day Santa would enter the basement while following all the instructions in
 /// `input`.
 pub fn part2(input: &str) -> usize {
     input
