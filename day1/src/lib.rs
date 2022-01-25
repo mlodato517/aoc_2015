@@ -3,19 +3,18 @@ const INITIAL_FLOOR: i32 = 0;
 
 /// Updates the floor Santa would reach after following the passed `instruction`.
 /// Returns `Some(new_floor)` to be compatible with [`std::iter::Iterator::scan`].
-fn process_floor(current_floor: &mut i32, instruction: char) -> Option<i32> {
-    match instruction {
-        '(' => *current_floor += 1,
-        ')' => *current_floor -= 1,
-        _ => panic!("invalid input"),
-    }
+fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
+    *current_floor -= instruction as i32 * 2 - (b'(' as i32 + b')' as i32);
     Some(*current_floor)
 }
 
 /// Returns the last floor Santa would be on after following all the instructions in `input`.
+///
+/// NOTE - I tried this with more-or-less `bytes().sum() * 2 - (81 * input.len())` and there was no
+/// appreciable performance change.
 pub fn part1(input: &str) -> i32 {
     input
-        .chars()
+        .bytes()
         .scan(INITIAL_FLOOR, process_floor)
         .last()
         .unwrap()
@@ -25,7 +24,7 @@ pub fn part1(input: &str) -> i32 {
 /// `input`.
 pub fn part2(input: &str) -> usize {
     input
-        .chars()
+        .bytes()
         .scan(INITIAL_FLOOR, process_floor)
         .zip(1..)
         .find(|&(floor, _)| floor < 0)
