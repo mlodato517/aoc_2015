@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "compress",
     "day1",
 ]
 
