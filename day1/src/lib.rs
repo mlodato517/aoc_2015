@@ -57,13 +57,13 @@ mod tests {
 
     #[test]
     fn test_part_1_chris_input() {
-        let input = include_str!("../input.txt");
-        assert_eq!(part1(input), 280);
+        let input = compress::aoc_input!("../input.compressed");
+        assert_eq!(part1(&input), 280);
     }
 
     #[test]
     fn test_part_2_chris_input() {
-        let input = include_str!("../input.txt");
-        assert_eq!(part2(input), 1797);
+        let input = compress::aoc_input!("../input.compressed");
+        assert_eq!(part2(&input), 1797);
     }
 }
