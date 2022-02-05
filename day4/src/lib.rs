@@ -1,15 +1,23 @@
 
-pub fn part1(input: &str) -> u32 {
+fn find_md5_starting_with(input: &str, prefix: &str) -> u32 {
     let mut i = 1;
     loop {
         let input = format!("{input}{i}");
         let hash = md5::compute(&input);
         let hash = format!("{:X}", &hash);
-        if hash.starts_with("00000") {
+        if hash.starts_with(prefix) {
             return i;
         }
         i += 1;
     }
+}
+
+pub fn part1(input: &str) -> u32 {
+    find_md5_starting_with(input, "00000")
+}
+
+pub fn part2(input: &str) -> u32 {
+    find_md5_starting_with(input, "000000")
 }
 
 #[cfg(test)]
