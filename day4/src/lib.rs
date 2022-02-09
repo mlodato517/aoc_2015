@@ -1,3 +1,4 @@
+use std::fmt::Write;
 
 fn find_md5_starting_with(input: &str, prefix: &str) -> u32 {
     let mut i = 1;
@@ -5,7 +6,7 @@ fn find_md5_starting_with(input: &str, prefix: &str) -> u32 {
     key += input;
     loop {
         key.truncate(input.len());
-        key += &i.to_string();
+        write!(&mut key, "{i}");
         let hash = md5::compute(&key);
         let hash = format!("{:X}", &hash);
         if hash.starts_with(prefix) {
