@@ -1,9 +1,12 @@
 
 fn find_md5_starting_with(input: &str, prefix: &str) -> u32 {
     let mut i = 1;
+    let mut key = String::with_capacity(input.len() + 11);
+    key += input;
     loop {
-        let input = format!("{input}{i}");
-        let hash = md5::compute(&input);
+        key.truncate(input.len());
+        key += &i.to_string();
+        let hash = md5::compute(&key);
         let hash = format!("{:X}", &hash);
         if hash.starts_with(prefix) {
             return i;
