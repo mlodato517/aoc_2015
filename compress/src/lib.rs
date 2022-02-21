@@ -9,7 +9,7 @@ pub fn compress(input: String) -> Vec<u8> {
 #[macro_export]
 macro_rules! aoc_input {
     ($path:literal) => {{
-        let file = include_bytes!("../input.compressed").to_vec();
+        let file = include_bytes!($path).to_vec();
         compress::decompress(file)
     }};
 }
