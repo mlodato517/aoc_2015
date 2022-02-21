@@ -1,23 +1,31 @@
+use std::io::{Read, Write};
+
 /// Compresses the passed string into the output byte vector.
-pub fn compress(input: String) -> Vec<u8> {
-    let input = input.into_bytes();
-    let mut output = Vec::with_capacity(input.len());
-    brotli::BrotliCompress(&mut input.as_slice(), &mut output, &Default::default()).unwrap();
-    output
+pub fn compress_to<R, W>(mut input: R, mut output: W)
+where
+    R: Read,
+    W: Write,
+{
+    brotli::BrotliCompress(&mut input, &mut output, &Default::default()).unwrap();
 }
 
 #[macro_export]
 macro_rules! aoc_input {
     ($path:literal) => {{
         let file = include_bytes!($path).to_vec();
-        compress::decompress(file)
+        compress::decompress(file.as_slice())
     }};
 }
 
-/// Decompresses the passed byte vector into a string.
-pub fn decompress(input: Vec<u8>) -> String {
-    let mut output = Vec::with_capacity(input.len());
-    brotli::BrotliDecompress(&mut input.as_slice(), &mut output).unwrap();
+/// Decompresses the passed reader into a string.
+///
+/// Panics if the result of decompression is invalid UTF-8.
+pub fn decompress<R>(mut input: R) -> String
+where
+    R: Read,
+{
+    let mut output = Vec::new();
+    brotli::BrotliDecompress(&mut input, &mut output).unwrap();
     String::from_utf8(output).unwrap()
 }
 
@@ -28,7 +36,9 @@ mod tests {
     #[test]
     fn decompress_inverts_compress() {
         let s = "some string";
+        let mut output = Vec::new();
+        compress_to(s.as_bytes(), &mut output);
 
-        assert_eq!(decompress(compress(s.to_string())), s);
+        assert_eq!(decompress(output.as_slice()), s);
     }
 }
