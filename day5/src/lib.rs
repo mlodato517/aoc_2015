@@ -3,49 +3,38 @@ pub fn part1(input: &str) -> usize {
     input.lines().filter(|&line| is_part1_nice(line)).count()
 }
 
-#[derive(Debug)]
-struct ParserState {
-    num_vowels: u8,
-    has_double_char: bool,
-    previous_character: char,
-}
-
 /// A string is nice if:
 ///
 /// - it has three vowels (of 'aeiou') (repeated vowels count)
 /// - it has at least one letter that appears twice in a row
 /// - does not contain 'ab', 'cd', 'pq', or 'xy'
 fn is_part1_nice(string: &str) -> bool {
-    let mut chars = string.chars();
-    let mut state = match chars.next() {
-        Some(first_char) => {
-            let num_vowels = if ['a', 'e', 'i', 'o', 'u'].contains(&first_char) {
-                1
-            } else {
-                0
-            };
-            ParserState {
-                num_vowels,
-                has_double_char: false,
-                previous_character: first_char,
-            }
-        }
-        None => return false,
-    };
-
-    for next_char in chars {
-        match (state.previous_character, next_char) {
-            ('a', 'b') | ('c', 'd') | ('p', 'q') | ('x', 'y') => return false,
-            (_, 'a') | (_, 'e') | (_, 'i') | (_, 'o') | (_, 'u') => state.num_vowels += 1,
-            _ => {}
-        }
-        if state.previous_character == next_char {
-            state.has_double_char = true;
-        }
-        state.previous_character = next_char;
+    let has_danger_strings = string
+        .as_bytes()
+        .windows(2)
+        .any(|window| window == b"ab" || window == b"cd" || window == b"pq" || window == b"xy");
+    if has_danger_strings {
+        return false;
     }
 
-    state.num_vowels >= 3 && state.has_double_char
+    let has_one_letter_duplicated = string
+        .as_bytes()
+        .windows(2)
+        .any(|window| window[0] == window[1]);
+    if !has_one_letter_duplicated {
+        return false;
+    }
+
+    let mut vowel_count = 0;
+    for c in string.chars() {
+        if ['a', 'e', 'i', 'o', 'u'].contains(&c) {
+            vowel_count += 1;
+        }
+        if vowel_count >= 3 {
+            return true;
+        }
+    }
+    false
 }
 
 /// Count the number of nice strings using a different "nice" metric.
