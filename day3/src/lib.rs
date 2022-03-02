@@ -27,20 +27,18 @@ pub fn part1(input: &str) -> u32 {
 /// Find out all the houses visited by Santa and Robo Santa by following the directions in `input`.
 /// One Santa follows every odd direction and the other Santa follows every even direction.
 pub fn part2(input: &str) -> u32 {
-    let mut location = (0, 0);
-    let mut visited_locations = [location].into_iter().collect::<HashSet<_>>();
+    let mut location1 = (0, 0);
+    let mut location2 = (0, 0);
+    let mut visited_locations = [location1].into_iter().collect::<HashSet<_>>();
 
-    // Robo santa loop
-    for c in input.chars().step_by(2) {
-        location = process_direction(location, c);
-        visited_locations.insert(location);
-    }
-
-    // Santa loop
-    let mut location = (0, 0);
-    for c in input.chars().skip(1).step_by(2) {
-        location = process_direction(location, c);
-        visited_locations.insert(location);
+    for (i, c) in input.chars().enumerate() {
+        if i & 1 == 0 {
+            location1 = process_direction(location1, c);
+            visited_locations.insert(location1);
+        } else {
+            location2 = process_direction(location2, c);
+            visited_locations.insert(location2);
+        }
     }
     visited_locations.len() as u32
 }
