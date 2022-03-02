@@ -1,84 +1,48 @@
 use std::collections::HashSet;
 
+/// Find out all the houses visited by Santa by following the directions in `input`.
 pub fn part1(input: &str) -> u32 {
     let mut location = (0, 0);
     let mut visited_locations = [location].into_iter().collect::<HashSet<_>>();
 
     for c in input.chars() {
-        match c {
-            '>' => {
-                location.0 += 1;
-                visited_locations.insert(location);
-            }
-            'v' => {
-                location.1 -= 1;
-                visited_locations.insert(location);
-            }
-            '<' => {
-                location.0 -= 1;
-                visited_locations.insert(location);
-            }
-            '^' => {
-                location.1 += 1;
-                visited_locations.insert(location);
-            }
-            _ => unreachable!("Invalid char"),
-        }
+        location = process_direction(location, c);
+        visited_locations.insert(location);
     }
     visited_locations.len() as u32
 }
 
+/// Find out all the houses visited by Santa and Robo Santa by following the directions in `input`.
+/// One Santa follows every odd direction and the other Santa follows every even direction.
 pub fn part2(input: &str) -> u32 {
     let mut location = (0, 0);
     let mut visited_locations = [location].into_iter().collect::<HashSet<_>>();
 
     // Robo santa loop
     for c in input.chars().step_by(2) {
-        match c {
-            '>' => {
-                location.0 += 1;
-                visited_locations.insert(location);
-            }
-            'v' => {
-                location.1 -= 1;
-                visited_locations.insert(location);
-            }
-            '<' => {
-                location.0 -= 1;
-                visited_locations.insert(location);
-            }
-            '^' => {
-                location.1 += 1;
-                visited_locations.insert(location);
-            }
-            _ => unreachable!("Invalid char"),
-        }
+        location = process_direction(location, c);
+        visited_locations.insert(location);
     }
 
     // Santa loop
     let mut location = (0, 0);
     for c in input.chars().skip(1).step_by(2) {
-        match c {
-            '>' => {
-                location.0 += 1;
-                visited_locations.insert(location);
-            }
-            'v' => {
-                location.1 -= 1;
-                visited_locations.insert(location);
-            }
-            '<' => {
-                location.0 -= 1;
-                visited_locations.insert(location);
-            }
-            '^' => {
-                location.1 += 1;
-                visited_locations.insert(location);
-            }
-            _ => unreachable!("Invalid char"),
-        }
+        location = process_direction(location, c);
+        visited_locations.insert(location);
     }
     visited_locations.len() as u32
+}
+
+/// Follow a direction to a new location. The directions are given as ASCII characters
+/// and direct the Santa north, south, east, or west.
+fn process_direction(current_location: (i32, i32), direction: char) -> (i32, i32) {
+    match direction {
+        '>' => (current_location.0 + 1, current_location.1),
+        'v' => (current_location.0, current_location.1 - 1),
+        '<' => (current_location.0 - 1, current_location.1),
+        '^' => (current_location.0, current_location.1 + 1),
+        _ => unreachable!("Invalid char"),
+    }
 }
 
 #[cfg(test)]
