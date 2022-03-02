@@ -1,5 +1,17 @@
 use std::collections::HashSet;
 
+const DIRECTIONS: [(i32, i32); 119] = initialize_directions();
+
+const fn initialize_directions() -> [(i32, i32); 119] {
+    let mut directions = [(0, 0); 119];
+
+    directions[b'>' as usize] = (1, 0);
+    directions[b'<' as usize] = (-1, 0);
+    directions[b'v' as usize] = (0, -1);
+    directions[b'^' as usize] = (0, 1);
+    directions
+}
+
 /// Find out all the houses visited by Santa by following the directions in `input`.
 pub fn part1(input: &str) -> u32 {
     let mut location = (0, 0);
@@ -35,14 +47,10 @@ pub fn part2(input: &str) -> u32 {
 
 /// Follow a direction to a new location. The directions are given as ASCII characters
 /// and direct the Santa north, south, east, or west.
-fn process_direction(current_location: (i32, i32), direction: char) -> (i32, i32) {
-    match direction {
-        '>' => (current_location.0 + 1, current_location.1),
-        'v' => (current_location.0, current_location.1 - 1),
-        '<' => (current_location.0 - 1, current_location.1),
-        '^' => (current_location.0, current_location.1 + 1),
-        _ => unreachable!("Invalid char"),
-    }
+fn process_direction(mut location: (i32, i32), direction: char) -> (i32, i32) {
+    location.0 += DIRECTIONS[direction as u32 as usize].0;
+    location.1 += DIRECTIONS[direction as u32 as usize].1;
+    location
 }
 
 #[cfg(test)]
