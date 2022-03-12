@@ -4,6 +4,11 @@ const INITIAL_FLOOR: i32 = 0;
 /// Updates the floor Santa would reach after following the passed `instruction`.
 /// Returns `Some(new_floor)` to be compatible with [`std::iter::Iterator::scan`].
 fn process_floor(current_floor: &mut i32, instruction: u8) -> Option<i32> {
+    // We want to add 1 if the floor is ( and subtract 1 for ).
+    // ( == 40 and ) == 41 so we can take the instruction, double it
+    // to get 80 or 82, and then subtract 81 (which is 40 + 41) to get -1 or 1.
+    // We then want to subtract this from the current floor since we want to add 1
+    // for ( and subtract 1 for ).
     *current_floor -= instruction as i32 * 2 - (b'(' as i32 + b')' as i32);
     Some(*current_floor)
 }
@@ -27,9 +32,8 @@ pub fn part2(input: &str) -> usize {
         .bytes()
         .scan(INITIAL_FLOOR, process_floor)
         .zip(1..)
-        .find(|&(floor, _)| floor < 0)
+        .find_map(|(floor, day)| (floor < 0).then(|| day))
         .unwrap()
-        .1
 }
 
 #[cfg(test)]
