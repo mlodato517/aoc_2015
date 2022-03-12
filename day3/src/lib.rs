@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+type HashSet<T> = rustc_hash::FxHashSet<T>;
 
 const DIRECTIONS: [(i32, i32); 119] = initialize_directions();
 
