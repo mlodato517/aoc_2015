@@ -27,7 +27,7 @@ fn is_part1_nice(string: &str) -> bool {
 
     let mut vowel_count = 0;
     for c in string.chars() {
-        if ['a', 'e', 'i', 'o', 'u'].contains(&c) {
+        if "aeoiu".contains(c) {
             vowel_count += 1;
         }
         if vowel_count >= 3 {
