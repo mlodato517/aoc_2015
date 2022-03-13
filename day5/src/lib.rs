@@ -9,32 +9,41 @@ pub fn part1(input: &str) -> usize {
 /// - it has at least one letter that appears twice in a row
 /// - does not contain 'ab', 'cd', 'pq', or 'xy'
 fn is_part1_nice(string: &str) -> bool {
-    let has_danger_strings = string
-        .as_bytes()
-        .windows(2)
-        .any(|window| window == b"ab" || window == b"cd" || window == b"pq" || window == b"xy");
-    if has_danger_strings {
-        return false;
-    }
+    let mut bytes = string.bytes();
+    let mut previous_byte = bytes.next().unwrap();
 
-    let has_one_letter_duplicated = string
-        .as_bytes()
-        .windows(2)
-        .any(|window| window[0] == window[1]);
-    if !has_one_letter_duplicated {
-        return false;
-    }
+    let mut has_one_letter_duplicated = false;
 
-    let mut vowel_count = 0;
-    for c in string.chars() {
-        if ['a', 'e', 'i', 'o', 'u'].contains(&c) {
-            vowel_count += 1;
+    // TODO: Does branchless matter here? Only happens once...
+    let mut num_vowels = if is_vowel(previous_byte) { 1 } else { 0 };
+
+    for next_byte in bytes {
+        match (previous_byte, next_byte) {
+            // If we contain any danger string, return false immediately.
+            (b'a', b'b') | (b'c', b'd') | (b'p', b'q') | (b'x', b'y') => return false,
+
+            // TODO: Does `has_one_letter_duplicated ||= a == b` do anything? It'd remove the
+            // match arm below which would be nice.
+            // TODO: Does not checking this after we have a duplicated letter help?
+            (a, b) if a == b => has_one_letter_duplicated = true,
+
+            _ => { /* nothing to do */ }
         }
-        if vowel_count >= 3 {
-            return true;
+        // TODO: Does branchless help here?
+        // TODO: Does stopping checking after we have 3 of these help here?
+        if is_vowel(next_byte) {
+            num_vowels += 1;
         }
+        previous_byte = next_byte;
     }
-    false
+    has_one_letter_duplicated && num_vowels >= 3
+}
+
+/// Checks if a byte is the ASCII byte for 'a', 'e', 'i', 'o', or 'u'.
+fn is_vowel(byte: u8) -> bool {
+    // This is the same machine code as a bunch of `== ||` checks or a `matches!`.
+    // See https://godbolt.org/z/nhGq18j6j. Gotta love compilers.
+    b"aeiou".contains(&byte)
 }
 
 /// Count the number of nice strings using a different "nice" metric.
