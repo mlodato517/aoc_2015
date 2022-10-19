@@ -1,9 +1,8 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 fn main() {
     let input = include_str!("../input.txt");
-    let input: Vec<_> = input.lines().map(parse).collect();
+    let input = input.lines().map(parse);
     let mut circuit = Circuit::new(input);
 
     const TARGET_WIRE: &str = "a";
@@ -15,13 +14,13 @@ fn main() {
     println!("Value of 'a' wire is updated to {a_value}!");
 }
 
-struct CircuitElement {
-    input: InputOrGate,
+struct CircuitElement<'a> {
+    input: InputOrGate<'a>,
     output: Option<u16>,
 }
 
-impl CircuitElement {
-    fn new(input: InputOrGate) -> Self {
+impl<'a> CircuitElement<'a> {
+    fn new(input: InputOrGate<'a>) -> Self {
         Self {
             input,
             output: None,
@@ -29,12 +28,15 @@ impl CircuitElement {
     }
 }
 
-struct Circuit {
-    inputs: HashMap<String, CircuitElement>,
+struct Circuit<'a> {
+    inputs: HashMap<&'a str, CircuitElement<'a>>,
 }
 
-impl Circuit {
-    fn new(input: Vec<(InputOrGate, String)>) -> Self {
+impl<'a> Circuit<'a> {
+    fn new<I>(input: I) -> Self
+    where
+        I: IntoIterator<Item = (InputOrGate<'a>, &'a str)>,
+    {
         let inputs: HashMap<_, _> = input
             .into_iter()
             .map(|(input_or_gate, wire_name)| (wire_name, CircuitElement::new(input_or_gate)))
@@ -85,23 +87,25 @@ impl Circuit {
     }
 }
 
-fn parse(s: &str) -> (InputOrGate, String) {
-    let parts: Vec<_> = s.split(" -> ").collect();
-    assert!(parts.len() == 2);
-    let output_wire = parts[1];
-    let lhs_parts: Vec<_> = parts[0].split(' ').collect();
-    let lhs = match lhs_parts.len() {
-        1 => InputOrGate::Input(lhs_parts[0].parse().unwrap()),
-        2 => {
-            assert_eq!("NOT", lhs_parts[0]);
-            let input: Input = lhs_parts[1].parse().unwrap();
+fn parse(s: &str) -> (InputOrGate, &str) {
+    let mut parts = s.split(" -> ");
+
+    let lhs = parts.next().expect("Line is empty!");
+    let output_wire = parts.next().expect("Line missing right hand side!");
+    assert!(parts.next().is_none());
+
+    let mut lhs_parts = lhs.split(' ');
+    let lhs = match (lhs_parts.next(), lhs_parts.next(), lhs_parts.next()) {
+        (Some(signal), None, None) => InputOrGate::Input(Input::parse(signal)),
+        (Some("NOT"), Some(input), None) => {
+            let input = Input::parse(input);
             let gate = Gate::Not(input);
             InputOrGate::Gate(gate)
         }
-        3 => {
-            let l_operand: Input = lhs_parts[0].parse().unwrap();
-            let r_operand: Input = lhs_parts[2].parse().unwrap();
-            let gate: Gate = match lhs_parts[1] {
+        (Some(input1), Some(operation), Some(input2)) => {
+            let l_operand = Input::parse(input1);
+            let r_operand = Input::parse(input2);
+            let gate: Gate = match operation {
                 "AND" => Gate::And(l_operand, r_operand),
                 "OR" => Gate::Or(l_operand, r_operand),
                 "LSHIFT" => Gate::Lshift(l_operand, r_operand),
@@ -112,37 +116,34 @@ fn parse(s: &str) -> (InputOrGate, String) {
         }
         _ => panic!("bad input with too many components"),
     };
-    (lhs, output_wire.to_owned())
+    (lhs, output_wire)
 }
 
 #[derive(Debug)]
-enum Input {
+enum Input<'a> {
     Signal(u16),
-    Wire(String),
+    Wire(&'a str),
 }
 
-impl FromStr for Input {
-    type Err = std::convert::Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(s.parse()
-            .map_or_else(|_| Self::Wire(s.to_owned()), Self::Signal))
+impl<'a> Input<'a> {
+    fn parse(s: &'a str) -> Self {
+        s.parse().map_or_else(|_| Self::Wire(s), Self::Signal)
     }
 }
 
 #[derive(Debug)]
-enum InputOrGate {
-    Input(Input),
-    Gate(Gate),
+enum InputOrGate<'a> {
+    Input(Input<'a>),
+    Gate(Gate<'a>),
 }
 
 #[derive(Debug)]
-enum Gate {
-    And(Input, Input),
-    Lshift(Input, Input),
-    Not(Input),
-    Rshift(Input, Input),
-    Or(Input, Input),
+enum Gate<'a> {
+    And(Input<'a>, Input<'a>),
+    Lshift(Input<'a>, Input<'a>),
+    Not(Input<'a>),
+    Rshift(Input<'a>, Input<'a>),
+    Or(Input<'a>, Input<'a>),
 }
 
 #[cfg(test)]
@@ -152,7 +153,7 @@ mod tests {
     #[test]
     fn chris_input() {
         let input = include_str!("../input.txt");
-        let input: Vec<_> = input.lines().map(parse).collect();
+        let input = input.lines().map(parse);
         let mut circuit = Circuit::new(input);
 
         const TARGET_WIRE: &str = "a";
