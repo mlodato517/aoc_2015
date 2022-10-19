@@ -8,12 +8,16 @@ fn main() {
 
     const TARGET_WIRE: &str = "a";
     let a_value = circuit.wire_value(TARGET_WIRE);
-    println!("Value of 'a' wire is {a_value}!");
+    println!("Value of 'a' wire is originally {a_value}!");
+
+    circuit.update_wire("b", a_value);
+    let a_value = circuit.wire_value(TARGET_WIRE);
+    println!("Value of 'a' wire is updated to {a_value}!");
 }
 
 struct Circuit {
-    inputs: HashMap<String, InputOrGate>,
-    cache: HashMap<String, u16>,
+    original_inputs: HashMap<String, InputOrGate>,
+    processed_inputs: HashMap<String, u16>,
 }
 
 impl Circuit {
@@ -24,26 +28,38 @@ impl Circuit {
             .collect();
         let cache = HashMap::new();
 
-        Self { inputs, cache }
+        Self {
+            original_inputs: inputs,
+            processed_inputs: cache,
+        }
     }
 
     fn wire_value(&mut self, wire_name: &str) -> u16 {
-        if let Some(value) = self.cache.get(wire_name) {
+        if let Some(value) = self.processed_inputs.get(wire_name) {
             return *value;
         }
 
-        let (name, input_or_gate) = self.inputs.remove_entry(wire_name).unwrap();
-        let value = match input_or_gate {
-            InputOrGate::Input(input) => self.resolve(&input),
-            InputOrGate::Gate(Gate::And(lhs, rhs)) => self.resolve(&lhs) & self.resolve(&rhs),
-            InputOrGate::Gate(Gate::Lshift(lhs, rhs)) => self.resolve(&lhs) << self.resolve(&rhs),
-            InputOrGate::Gate(Gate::Not(input)) => !self.resolve(&input),
-            InputOrGate::Gate(Gate::Rshift(lhs, rhs)) => self.resolve(&lhs) >> self.resolve(&rhs),
-            InputOrGate::Gate(Gate::Or(lhs, rhs)) => self.resolve(&lhs) | self.resolve(&rhs),
+        let (name, input_or_gate) = self.original_inputs.remove_entry(wire_name).unwrap();
+        let value = match &input_or_gate {
+            InputOrGate::Input(input) => self.resolve(input),
+            InputOrGate::Gate(Gate::And(lhs, rhs)) => self.resolve(lhs) & self.resolve(rhs),
+            InputOrGate::Gate(Gate::Lshift(lhs, rhs)) => self.resolve(lhs) << self.resolve(rhs),
+            InputOrGate::Gate(Gate::Not(input)) => !self.resolve(input),
+            InputOrGate::Gate(Gate::Rshift(lhs, rhs)) => self.resolve(lhs) >> self.resolve(rhs),
+            InputOrGate::Gate(Gate::Or(lhs, rhs)) => self.resolve(lhs) | self.resolve(rhs),
         };
 
-        self.cache.insert(name, value);
+        self.original_inputs.insert(name.clone(), input_or_gate);
+        self.processed_inputs.insert(name, value);
         value
+    }
+
+    fn update_wire(&mut self, wire_name: &str, wire_value: u16) {
+        *self.original_inputs.get_mut(wire_name).unwrap() =
+            InputOrGate::Input(Input::Signal(wire_value));
+
+        // The circuit has changed - any processed inputs could now be different!
+        self.processed_inputs.clear();
     }
 
     fn resolve(&mut self, input: &Input) -> u16 {
@@ -114,3 +130,22 @@ enum Gate {
     Or(Input, Input),
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chris_input() {
+        let input = include_str!("../input.txt");
+        let input: Vec<_> = input.lines().map(parse).collect();
+        let mut circuit = Circuit::new(input);
+
+        const TARGET_WIRE: &str = "a";
+        let a_value = circuit.wire_value(TARGET_WIRE);
+        assert_eq!(a_value, 46065);
+
+        circuit.update_wire("b", a_value);
+        let a_value = circuit.wire_value(TARGET_WIRE);
+        assert_eq!(a_value, 14134);
+    }
+}
