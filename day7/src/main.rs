@@ -15,32 +15,45 @@ fn main() {
     println!("Value of 'a' wire is updated to {a_value}!");
 }
 
+struct CircuitElement {
+    input: InputOrGate,
+    output: Option<u16>,
+}
+
+impl CircuitElement {
+    fn new(input: InputOrGate) -> Self {
+        Self {
+            input,
+            output: None,
+        }
+    }
+}
+
 struct Circuit {
-    original_inputs: HashMap<String, InputOrGate>,
-    processed_inputs: HashMap<String, u16>,
+    inputs: HashMap<String, CircuitElement>,
 }
 
 impl Circuit {
     fn new(input: Vec<(InputOrGate, String)>) -> Self {
         let inputs: HashMap<_, _> = input
             .into_iter()
-            .map(|(input_or_gate, wire_name)| (wire_name, input_or_gate))
+            .map(|(input_or_gate, wire_name)| (wire_name, CircuitElement::new(input_or_gate)))
             .collect();
-        let cache = HashMap::new();
 
-        Self {
-            original_inputs: inputs,
-            processed_inputs: cache,
-        }
+        Self { inputs }
     }
 
     fn wire_value(&mut self, wire_name: &str) -> u16 {
-        if let Some(value) = self.processed_inputs.get(wire_name) {
-            return *value;
+        if let Some(output) = self
+            .inputs
+            .get(wire_name)
+            .and_then(|element| element.output)
+        {
+            return output;
         }
 
-        let (name, input_or_gate) = self.original_inputs.remove_entry(wire_name).unwrap();
-        let value = match &input_or_gate {
+        let (name, mut input_or_gate) = self.inputs.remove_entry(wire_name).unwrap();
+        let output = match &input_or_gate.input {
             InputOrGate::Input(input) => self.resolve(input),
             InputOrGate::Gate(Gate::And(lhs, rhs)) => self.resolve(lhs) & self.resolve(rhs),
             InputOrGate::Gate(Gate::Lshift(lhs, rhs)) => self.resolve(lhs) << self.resolve(rhs),
@@ -48,18 +61,20 @@ impl Circuit {
             InputOrGate::Gate(Gate::Rshift(lhs, rhs)) => self.resolve(lhs) >> self.resolve(rhs),
             InputOrGate::Gate(Gate::Or(lhs, rhs)) => self.resolve(lhs) | self.resolve(rhs),
         };
+        input_or_gate.output = Some(output);
 
-        self.original_inputs.insert(name.clone(), input_or_gate);
-        self.processed_inputs.insert(name, value);
-        value
+        self.inputs.insert(name, input_or_gate);
+        output
     }
 
     fn update_wire(&mut self, wire_name: &str, wire_value: u16) {
-        *self.original_inputs.get_mut(wire_name).unwrap() =
+        self.inputs.get_mut(wire_name).unwrap().input =
             InputOrGate::Input(Input::Signal(wire_value));
 
-        // The circuit has changed - any processed inputs could now be different!
-        self.processed_inputs.clear();
+        // The circuit has changed - any outputs could now be different!
+        for element in self.inputs.values_mut() {
+            element.output = None;
+        }
     }
 
     fn resolve(&mut self, input: &Input) -> u16 {
